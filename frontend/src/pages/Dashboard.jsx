@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Bell,
   Download,
@@ -12,8 +12,6 @@ import {
 } from "lucide-react"; // Assuming you use lucide-react, or replace with your icons
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] p-6 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -26,11 +24,11 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="px-4 py-2 bg-white border border-[var(--border-color)] text-[var(--text-main)] rounded-lg hover:bg-[var(--primary-hover)] hover:text-white font-medium transition-colors flex items-center gap-2 cursor-pointer">
+            <button className="px-4 py-2 bg-white border border-[var(--border-color)] text-[var(--text-main)] rounded-lg hover:bg-[var(--primary-hover)] hover:text-[var(--text-on-primary)] font-medium transition-colors flex items-center gap-2">
               <Download size={18} />
               Download report
             </button>
-            <Link to="/start-attendance" className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:bg-[var(--primary-hover)] font-medium shadow-sm flex items-center gap-2 transition-colors">
+            <Link to="/start-attendance" className="px-4 py-2 bg-[var(--primary)] text-[var(--text-on-primary)] rounded-lg hover:bg-[var(--primary-hover)] font-medium shadow-sm flex items-center gap-2 transition-colors">
               <Play size={18} fill="currentColor" />
               Start attendance
             </Link>
@@ -58,7 +56,7 @@ export default function Dashboard() {
 
               <div className="flex flex-col items-end gap-3 w-full md:w-auto">
                 <span className="text-xs font-medium text-[var(--primary)] bg-indigo-50 px-2 py-1 rounded">Face recognition is ready</span>
-                <Link to="/attendance-session" className="w-full md:w-auto px-6 py-3 bg-[var(--primary)] text-white rounded-xl font-semibold hover:bg-[var(--primary-hover)] transition shadow-md text-center">
+                <Link to="/attendance-session" className="w-full md:w-auto px-6 py-3 bg-[var(--primary)] text-[var(--text-on-primary)] rounded-xl font-semibold hover:bg-[var(--primary-hover)] transition shadow-md text-center">
                   Start attendance session
                 </Link>
                 <div className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
@@ -71,7 +69,7 @@ export default function Dashboard() {
             {/* 2.2 Stats Row (Blue Cards) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Stat 1 */}
-              <div className="bg-blue-600 text-white rounded-2xl p-5 relative overflow-hidden">
+              <div className="bg-blue-600 text-[var(--text-on-primary)] rounded-2xl p-5 relative overflow-hidden">
                 <p className="text-blue-100 text-sm font-medium mb-1">Today's attendance rate</p>
                 <div className="flex items-end justify-between">
                   <h3 className="text-3xl font-bold">94%</h3>
@@ -80,7 +78,7 @@ export default function Dashboard() {
               </div>
 
               {/* Stat 2 */}
-              <div className="bg-blue-600 text-white rounded-2xl p-5">
+              <div className="bg-blue-600 text-[var(--text-on-primary)] rounded-2xl p-5">
                 <p className="text-blue-100 text-sm font-medium mb-1">Absent</p>
                 <div className="flex items-end justify-between">
                   <h3 className="text-3xl font-bold">7</h3>
@@ -89,7 +87,7 @@ export default function Dashboard() {
               </div>
 
               {/* Stat 3 */}
-              <div className="bg-blue-600 text-white rounded-2xl p-5">
+              <div className="bg-blue-600 text-[var(--text-on-primary)] rounded-2xl p-5">
                 <p className="text-blue-100 text-sm font-medium mb-1">Late arrivals</p>
                 <div className="flex items-end justify-between">
                   <h3 className="text-3xl font-bold">3</h3>
@@ -99,25 +97,19 @@ export default function Dashboard() {
             </div>
 
             {/* 2.3 Quick Actions Row (Light Gray Cards) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <Link to="/students" className="block">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-[var(--bg-secondary)] p-5 rounded-2xl cursor-pointer hover:bg-gray-200 transition">
                 <div className="font-semibold text-[var(--text-main)] mb-1">View student list</div>
                 <div className="text-xs text-[var(--text-body)]">Search, filter and manage profiles</div>
               </div>
-              </Link>
-              <Link to="/attendance" className="block">
               <div className="bg-[var(--bg-secondary)] p-5 rounded-2xl cursor-pointer hover:bg-gray-200 transition">
                 <div className="font-semibold text-[var(--text-main)] mb-1">Go to attendance</div>
                 <div className="text-xs text-[var(--text-body)]">Open live marking screen</div>
               </div>
-              </Link>
-              <Link to="/" className="block">
               <div className="bg-[var(--bg-secondary)] p-5 rounded-2xl cursor-pointer hover:bg-gray-200 transition">
                 <div className="font-semibold text-[var(--text-main)] mb-1">Manage schedule</div>
                 <div className="text-xs text-[var(--text-body)]">Edit classes and timetables</div>
               </div>
-              </Link>
             </div>
 
           </div>
