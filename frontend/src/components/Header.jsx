@@ -2,10 +2,14 @@ import React from "react";
 import { Bell, User, ChevronDown } from "lucide-react";
 import { useUser, UserButton } from "@clerk/clerk-react";
 
+// Helper function to get user display name
+const getUserDisplayName = (user) => {
+  return user?.fullName || user?.primaryEmailAddress?.emailAddress || "Guest";
+};
+
 export default function Header() {
     const { user, isLoaded } = useUser();
-
-    const displayName = user?.fullName || user?.primaryEmailAddress?.emailAddress || "Guest";
+    const displayName = getUserDisplayName(user);
 
   return (
     <>

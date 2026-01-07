@@ -1,6 +1,6 @@
 // frontend/src/App.jsx
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import Dashboard from "./pages/Dashboard";
 import MarkAttendance from "./pages/MarkAttendance";
@@ -44,7 +44,9 @@ function RedirectToHome() {
     return <Navigate to="/login" />;
   }
 
-  // Get role from user's public metadata
+  // Get role from user's metadata
+  // publicMetadata is accessible on the client and should be used for role
+  // unsafeMetadata is checked as fallback for compatibility during migration
   const userRole = user?.publicMetadata?.role || user?.unsafeMetadata?.role;
 
   if (userRole === "teacher") {
@@ -70,9 +72,9 @@ const studentRoutes = [
 
 export default function App() {
   const { theme, setTheme } = useTheme();
-  const { pathname } = window.location;
+  const location = useLocation();
 
-  const hideNavbar = studentRoutes.includes(pathname);
+  const hideNavbar = studentRoutes.includes(location.pathname);
 
   return (
     <div className="min-h-screen">
