@@ -14,7 +14,10 @@ class EmbeddingsStorage:
     
     def __init__(self, storage_path: str):
         self.storage_path = Path(storage_path)
-        self.storage_path.mkdir(parents=True, exist_ok=True)
+        try:
+            self.storage_path.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            raise RuntimeError(f"Failed to create storage directory {storage_path}: {e}")
     
     def _get_file_path(self, student_id: str) -> Path:
         """Get the file path for a student's embeddings."""
@@ -29,6 +32,9 @@ class EmbeddingsStorage:
             student_id: Unique student identifier
             embedding: 128-dimensional face embedding
         """
+        if not student_id or not student_id.strip():
+            raise ValueError("student_id cannot be empty")
+        
         file_path = self._get_file_path(student_id)
         
         # Load existing embeddings or create new list
@@ -45,7 +51,7 @@ class EmbeddingsStorage:
         
         # Save back to file
         with open(file_path, 'w') as f:
-            json.dump(embeddings, f)
+            json.dump(embeddings, f, indent=2)
     
     def get_embeddings(self, student_id: str) -> Optional[List[List[float]]]:
         """
@@ -57,6 +63,9 @@ class EmbeddingsStorage:
         Returns:
             List of embeddings or None if student not found
         """
+        if not student_id or not student_id.strip():
+            return None
+        
         file_path = self._get_file_path(student_id)
         
         if not file_path.exists():
@@ -78,6 +87,9 @@ class EmbeddingsStorage:
         Returns:
             True if deleted, False if not found
         """
+        if not student_id or not student_id.strip():
+            return False
+        
         file_path = self._get_file_path(student_id)
         
         if file_path.exists():
@@ -116,9 +128,12 @@ class EmbeddingsStorage:
         Returns:
             True if student has embeddings, False otherwise
         """
+        if not student_id or not student_id.strip():
+            return False
+        
         embeddings = self.get_embeddings(student_id)
         return embeddings is not None and len(embeddings) > 0
 
-
-# Global instance
+# Global instance - initialized once at module load
+# For testing, you can mock this or create a new instance
 embeddings_storage = EmbeddingsStorage(settings.EMBEDDINGS_STORAGE_PATH)
