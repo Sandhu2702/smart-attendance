@@ -108,7 +108,7 @@ Smart Attendance is a modern, intelligent attendance management system designed 
 | **TanStack Query** | 5.90.12 | Powerful data fetching and state management |
 | **Lucide React** | 0.555.0 | Beautiful & consistent icon toolkit |
 
-### Backend
+### Backend API
 
 | Technology | Version | Purpose |
 |-----------|---------|---------|
@@ -117,14 +117,22 @@ Smart Attendance is a modern, intelligent attendance management system designed 
 | **MongoDB** | - | NoSQL database for flexible data storage |
 | **Motor** | - | Asynchronous MongoDB driver for Python |
 | **PyJWT** | - | JSON Web Token implementation |
-| **Face Recognition** | 1.3.0 | Face recognition library built with dlib |
-| **OpenCV** | - | Computer vision and image processing |
-| **NumPy** | 1.26.4 | Numerical computing library |
-| **Pillow** | 11.0.0 | Python Imaging Library |
 | **Cloudinary** | - | Cloud-based image storage and management |
 | **Passlib** | 1.7.4 | Password hashing library |
 | **Python Dotenv** | - | Environment variable management |
 | **Authlib** | - | OAuth and authentication library |
+
+### ML Service
+
+| Technology | Version | Purpose |
+|-----------|---------|---------|
+| **FastAPI** | 0.115.5 | High-performance Python web framework |
+| **Uvicorn** | 0.32.1 | Lightning-fast ASGI server |
+| **MediaPipe** | 0.10.9 | Face detection and mesh analysis |
+| **OpenCV** | - | Computer vision and image processing |
+| **NumPy** | 1.26.4 | Numerical computing library |
+| **Pillow** | 11.0.0 | Python Imaging Library |
+| **Scikit-learn** | - | Machine learning utilities |
 
 ---
 
@@ -617,119 +625,130 @@ docker run -p 5173:5173 smart-attendance-frontend
 
 ```
 smart-attendance/
-├── backend/                          # Backend API server
-│   ├── app/
-│   │   ├── api/                     # API routes
-│   │   │   ├── routes/
-│   │   │   │   ├── auth.py          # Authentication endpoints
-│   │   │   │   ├── students.py      # Student management
-│   │   │   │   ├── attendance.py    # Attendance marking
-│   │   │   │   ├── classes.py       # Class management
-│   │   │   │   ├── face.py          # Face recognition endpoints
-│   │   │   │   ├── teacher_settings.py # Teacher preferences
-│   │   │   │   └── users.py         # User management
-│   │   │   └── deps.py              # API dependencies
-│   │   ├── core/                    # Core configuration
-│   │   │   ├── config.py            # App configuration
-│   │   │   ├── security.py          # Security utilities
-│   │   │   ├── email.py             # Email service
-│   │   │   └── cloudinary_config.py # Cloud storage config
-│   │   ├── db/                      # Database layer
-│   │   │   ├── mongo.py             # MongoDB connection
-│   │   │   ├── models.py            # Database models
-│   │   │   ├── base.py              # Base repository
-│   │   │   ├── session.py           # Session management
-│   │   │   ├── subjects_repo.py     # Subject repository
-│   │   │   └── teacher_settings_repo.py
-│   │   ├── schemas/                 # Pydantic schemas
-│   │   │   ├── user.py              # User schemas
-│   │   │   ├── student.py           # Student schemas
-│   │   │   ├── teacher.py           # Teacher schemas
-│   │   │   ├── auth.py              # Authentication schemas
-│   │   │   ├── attendance.py        # Attendance schemas
-│   │   │   ├── face.py              # Face data schemas
-│   │   │   ├── timetable.py         # Timetable schemas
-│   │   │   └── teacher_settings.py  # Settings schemas
-│   │   ├── services/                # Business logic
-│   │   │   ├── face_recognition.py  # Face recognition service
-│   │   │   ├── attendance.py        # Attendance logic
-│   │   │   ├── students.py          # Student management
-│   │   │   ├── subject_service.py   # Subject management
-│   │   │   ├── email.py             # Email service
-│   │   │   └── teacher_settings_service.py
-│   │   ├── utils/                   # Utility functions
-│   │   │   ├── face_detect.py       # Face detection
-│   │   │   ├── face_encode.py       # Face encoding
-│   │   │   ├── match_utils.py       # Face matching
-│   │   │   ├── image.py             # Image processing
-│   │   │   ├── jwt_token.py         # JWT utilities
-│   │   │   ├── logging.py           # Logging configuration
-│   │   │   └── utils.py             # General utilities
-│   │   ├── static/                  # Static files
-│   │   │   └── avatars/             # User profile pictures
-│   │   └── main.py                  # Application entry point
-│   ├── tests/                       # Test suite
-│   │   ├── test_auth.py
-│   │   └── test_attendance.py
-│   ├── .env.example                 # Environment variables template
-│   ├── Dockerfile                   # Docker configuration
-│   ├── requirements.txt             # Python dependencies
-│   └── alembic.ini                  # Database migration config
+├── server/                             # Backend services
+│   ├── backend-api/                    # Backend API server
+│   │   ├── app/
+│   │   │   ├── api/                    # API routes
+│   │   │   │   ├── routes/
+│   │   │   │   │   ├── auth.py         # Authentication endpoints
+│   │   │   │   │   ├── students.py     # Student management
+│   │   │   │   │   ├── attendance.py   # Attendance marking
+│   │   │   │   │   ├── classes.py      # Class management
+│   │   │   │   │   ├── teacher_settings.py # Teacher preferences
+│   │   │   │   │   └── users.py        # User management
+│   │   │   │   └── deps.py             # API dependencies
+│   │   │   ├── core/                   # Core configuration
+│   │   │   │   ├── config.py           # App configuration
+│   │   │   │   ├── security.py         # Security utilities
+│   │   │   │   ├── email.py            # Email service
+│   │   │   │   └── cloudinary_config.py # Cloud storage config
+│   │   │   ├── db/                     # Database layer
+│   │   │   │   ├── mongo.py            # MongoDB connection
+│   │   │   │   ├── models.py           # Database models
+│   │   │   │   ├── base.py             # Base repository
+│   │   │   │   ├── session.py          # Session management
+│   │   │   │   ├── subjects_repo.py    # Subject repository
+│   │   │   │   └── teacher_settings_repo.py
+│   │   │   ├── schemas/                # Pydantic schemas
+│   │   │   │   ├── user.py             # User schemas
+│   │   │   │   ├── student.py          # Student schemas
+│   │   │   │   ├── teacher.py          # Teacher schemas
+│   │   │   │   ├── auth.py             # Authentication schemas
+│   │   │   │   ├── attendance.py       # Attendance schemas
+│   │   │   │   ├── timetable.py        # Timetable schemas
+│   │   │   │   └── teacher_settings.py # Settings schemas
+│   │   │   ├── services/               # Business logic
+│   │   │   │   ├── attendance.py       # Attendance logic
+│   │   │   │   ├── students.py         # Student management
+│   │   │   │   ├── subject_service.py  # Subject management
+│   │   │   │   ├── email.py            # Email service
+│   │   │   │   └── teacher_settings_service.py
+│   │   │   ├── utils/                  # Utility functions
+│   │   │   │   ├── jwt_token.py        # JWT utilities
+│   │   │   │   ├── logging.py          # Logging configuration
+│   │   │   │   └── utils.py            # General utilities
+│   │   │   └── main.py                 # Application entry point
+│   │   ├── tests/                      # Test suite
+│   │   ├── .env.example                # Environment variables template
+│   │   ├── Dockerfile                  # Docker configuration
+│   │   └── requirements.txt            # Python dependencies
+│   │
+│   └── ml-service/                     # ML facial recognition service
+│       ├── app/
+│       │   ├── api/                    # API routes
+│       │   │   ├── routes/
+│       │   │   │   └── face.py         # Face detection endpoints
+│       │   │   └── deps.py             # API dependencies
+│       │   ├── core/                   # Core configuration
+│       │   │   └── config.py           # App configuration
+│       │   ├── ml/                     # ML models and logic
+│       │   │   ├── face_detection.py   # Face detection using MediaPipe
+│       │   │   ├── face_encoding.py    # Face encoding
+│       │   │   └── face_matching.py    # Face matching logic
+│       │   ├── schemas/                # Pydantic schemas
+│       │   │   └── face.py             # Face data schemas
+│       │   ├── utils/                  # Utility functions
+│       │   │   ├── image.py            # Image processing
+│       │   │   └── utils.py            # General utilities
+│       │   └── main.py                 # Application entry point
+│       ├── .env.example                # Environment variables template
+│       ├── Dockerfile                  # Docker configuration
+│       └── requirements.txt            # Python dependencies
 │
-├── frontend/                        # Frontend React application
-│   ├── public/                      # Public assets
+├── frontend/                           # Frontend React application
+│   ├── public/                         # Public assets
 │   │   ├── logo.png
 │   │   └── logo-bg.png
 │   ├── src/
-│   │   ├── api/                     # API client
-│   │   │   └── axios.js             # Axios configuration
-│   │   ├── assets/                  # Images and resources
-│   │   ├── components/              # Reusable components
-│   │   │   ├── Header.jsx           # Navigation header
+│   │   ├── api/                        # API client
+│   │   │   └── axios.js                # Axios configuration
+│   │   ├── assets/                     # Images and resources
+│   │   ├── components/                 # Reusable components
+│   │   │   ├── Header.jsx              # Navigation header
 │   │   │   └── ...
-│   │   ├── hooks/                   # Custom React hooks
-│   │   ├── pages/                   # Page components
-│   │   │   ├── Dashboard.jsx        # Teacher dashboard
-│   │   │   ├── Login.jsx            # Login page
-│   │   │   ├── Register.jsx         # Registration page
-│   │   │   ├── MarkAttendance.jsx   # Attendance marking
-│   │   │   ├── StudentList.jsx      # Student listing
-│   │   │   ├── AddStudents.jsx      # Add students
-│   │   │   ├── Analytics.jsx        # Analytics page
-│   │   │   ├── Reports.jsx          # Reports generation
-│   │   │   ├── Settings.jsx         # Settings page
-│   │   │   └── OAuthCallback.jsx    # OAuth callback
-│   │   ├── students/                # Student portal
+│   │   ├── hooks/                      # Custom React hooks
+│   │   ├── pages/                      # Page components
+│   │   │   ├── Dashboard.jsx           # Teacher dashboard
+│   │   │   ├── Login.jsx               # Login page
+│   │   │   ├── Register.jsx            # Registration page
+│   │   │   ├── MarkAttendance.jsx      # Attendance marking
+│   │   │   ├── StudentList.jsx         # Student listing
+│   │   │   ├── AddStudents.jsx         # Add students
+│   │   │   ├── Analytics.jsx           # Analytics page
+│   │   │   ├── Reports.jsx             # Reports generation
+│   │   │   ├── Settings.jsx            # Settings page
+│   │   │   └── OAuthCallback.jsx       # OAuth callback
+│   │   ├── students/                   # Student portal
 │   │   │   └── pages/
 │   │   │       ├── StudentDashboard.jsx
 │   │   │       ├── StudentSubjects.jsx
 │   │   │       ├── StudentForecast.jsx
 │   │   │       └── StudentProfile.jsx
-│   │   ├── renderer/                # UI renderers
-│   │   ├── theme/                   # Theme configuration
+│   │   ├── renderer/                   # UI renderers
+│   │   ├── theme/                      # Theme configuration
 │   │   │   └── ThemeContext.jsx
-│   │   ├── App.jsx                  # Main app component
-│   │   ├── main.jsx                 # Application entry
-│   │   └── index.css                # Global styles
+│   │   ├── App.jsx                     # Main app component
+│   │   ├── main.jsx                    # Application entry
+│   │   └── index.css                   # Global styles
 │   ├── .gitignore
 │   ├── index.html
-│   ├── package.json                 # NPM dependencies
+│   ├── package.json                    # NPM dependencies
 │   ├── package-lock.json
-│   ├── vite.config.js               # Vite configuration
-│   ├── eslint.config.js             # ESLint configuration
-│   ├── postcss.config.js            # PostCSS configuration
-│   └── vercel.json                  # Vercel deployment config
+│   ├── vite.config.js                  # Vite configuration
+│   ├── eslint.config.js                # ESLint configuration
+│   ├── postcss.config.js               # PostCSS configuration
+│   └── vercel.json                     # Vercel deployment config
 │
-├── .github/                         # GitHub configuration
+├── .github/                            # GitHub configuration
 │   ├── ISSUE_TEMPLATE/
-│   │   └── bug_report.md
+│   │   ├── bug_report.md
+│   │   └── feature_request.md
 │   └── pull_request_template.md
-├── .gitignore                       # Git ignore rules
-├── CODE_OF_CONDUCT.md               # Code of conduct
-├── CONTRIBUTING.md                  # Contribution guidelines
-├── README.md                        # This file
-├── learn.md                         # Beginner's guide
-└── diagram.drawio                   # Architecture diagram
+├── .gitignore                          # Git ignore rules
+├── CODE_OF_CONDUCT.md                  # Code of conduct
+├── CONTRIBUTING.md                     # Contribution guidelines
+├── README.md                           # This file
+└── learn.md                            # Beginner's guide
 ```
 
 ---
@@ -1275,7 +1294,7 @@ A: Yes! The web app is fully responsive and works on mobile browsers.
 A: Absolutely! This is open-source software. Just follow the installation guide.
 
 **Q: Is facial recognition accurate?**  
-A: The system uses the `face_recognition` library with high accuracy. However, lighting and camera quality affect results.
+A: The system uses MediaPipe for face detection with high accuracy. However, lighting and camera quality affect results.
 
 **Q: Do I need a GPU for face recognition?**  
 A: No, CPU is sufficient for small-scale deployments. GPU recommended for 100+ students.
@@ -1310,7 +1329,7 @@ Special thanks to:
 
 - **FastAPI** team for the amazing framework
 - **React** team for the powerful UI library
-- **face_recognition** library by Adam Geitgey
+- **MediaPipe** team for the face detection library
 - All our **open-source contributors**
 - Educational institutions testing this system
 - The **open-source community** for invaluable feedback
@@ -1320,7 +1339,8 @@ Special thanks to:
 - [FastAPI](https://fastapi.tiangolo.com/) - Modern Python web framework
 - [React](https://react.dev/) - JavaScript library for user interfaces
 - [MongoDB](https://www.mongodb.com/) - NoSQL database
-- [face_recognition](https://github.com/ageitgey/face_recognition) - Face recognition library
+- [MediaPipe](https://google.github.io/mediapipe/) - Face detection and analysis
+- [OpenCV](https://opencv.org/) - Computer vision library
 - [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
 - [Vite](https://vitejs.dev/) - Next-generation frontend tooling
 - [Cloudinary](https://cloudinary.com/) - Media management platform
