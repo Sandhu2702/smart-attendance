@@ -208,7 +208,11 @@ export default function StudentList() {
                         <div className="text-gray-500">
                           <p className="text-lg font-medium">No students found</p>
                           <p className="text-sm mt-1">
-                            {searchTerm ? `No students match "${searchTerm}"` : `No students match the selected filter "${selectedFilter}"`}
+                            {searchTerm && selectedFilter !== "All" 
+                              ? `No students match "${searchTerm}" with filter "${selectedFilter}"`
+                              : searchTerm
+                              ? `No students match "${searchTerm}"`
+                              : `No students match the selected filter "${selectedFilter}"`}
                           </p>
                         </div>
                       </td>
@@ -222,7 +226,7 @@ export default function StudentList() {
                     let status = "Moderate";
                     let trend = 0;
 
-                    if (percentage >= 90) {
+                    if (percentage > 90) {
                       color = "green";
                       status = "Excellent";
                     } else if (percentage < 75) {
