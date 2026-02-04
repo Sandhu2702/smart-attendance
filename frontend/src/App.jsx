@@ -12,11 +12,13 @@ import Settings from "./pages/Settings";
 import AddStudents from "./pages/AddStudents";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Schedule from './pages/Schedule'
 import StudentDashboard from "./students/pages/StudentDashboard.jsx"
 import StudentSubjects from "./students/pages/StudentSubjects.jsx";
 import StudentForecast from "./students/pages/StudentForecast.jsx";
 import StudentProfile from "./students/pages/StudentProfile.jsx"
 import OAuthCallback from "./pages/OAuthCallback.jsx";
+
 
 function RedirectToHome() {
   const storedUser = localStorage.getItem("user");
@@ -62,6 +64,7 @@ export default function App() {
           <Route path="/students" element={<StudentList/>}/>
           <Route path="/analytics" element={<Analytics/>}/>
           <Route path="/reports" element={<Reports/>}/>
+          <Route path="/Schedule" element={<Schedule />}/>
           <Route path="/settings" element={<Settings/>}/>
           <Route path="/add-students" element={<AddStudents/>}/>
           <Route path="/login" element={<Login/>}/>
