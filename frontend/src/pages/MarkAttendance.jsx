@@ -48,16 +48,11 @@ export default function MarkAttendance() {
         const response = await axios.get(import.meta.env.VITE_ML_SERVICE_URL, {
           signal: controller.signal
         });
-        console.log("ML Status Check (MarkAttendance):", response.status);
-        clearTimeout(timeoutId);
-
         if (response.status === 200) {
           setMlStatus("ready");
         }
-      } catch (error) {
+      } catch {
         clearTimeout(timeoutId);
-        console.log("Health check error:", error);
-        console.error("ML Service status check failed:", error);
         setMlStatus("waking-up");
       }
     };
@@ -157,8 +152,7 @@ export default function MarkAttendance() {
 
       setAttendanceSubmitted(true);
       alert("Attendance saved successfully");
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("Failed to save attendance");
     }
   };

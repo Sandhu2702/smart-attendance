@@ -2,25 +2,21 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
-
-load_dotenv()
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from .core.config import APP_NAME
-
-# Routes
+from app.api.routes import teacher_settings as settings_router
+from .api.routes.attendance import router as attendance_router
 from .api.routes.auth import router as auth_router
 from .api.routes.students import router as students_router
-from .api.routes.attendance import router as attendance_router
-
-from app.api.routes import teacher_settings as settings_router
-from app.services.ml_client import ml_client
+from .core.config import APP_NAME
 from app.services.attendance_daily import (
     ensure_indexes as ensure_attendance_daily_indexes,
 )
+from app.services.ml_client import ml_client
+
+load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,

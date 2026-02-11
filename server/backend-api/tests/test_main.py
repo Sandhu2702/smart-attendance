@@ -5,6 +5,7 @@ import sys
 # Mock modules before importing app.main to avoid side effects if any
 sys.modules["app.services.ml_client"] = MagicMock()
 sys.modules["app.services.attendance_daily"] = MagicMock()
+sys.modules["app.db.mongo"] = MagicMock()
 
 from app.main import app
 

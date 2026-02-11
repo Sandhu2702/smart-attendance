@@ -15,7 +15,6 @@ import {
 } from "lucide-react"; // Assuming you use lucide-react, or replace with your icons
 
 export default function Dashboard() {
-  // const navigate = useNavigate(); // Unused
   const [user] = useState(() => {
     const data = localStorage.getItem("user");
     return data ? JSON.parse(data) : null;
@@ -33,16 +32,11 @@ export default function Dashboard() {
         const response = await axios.get(import.meta.env.VITE_ML_SERVICE_URL, {
           signal: controller.signal
         });
-        console.log("ML Status Check (Dashboard):", response.status);
-        clearTimeout(timeoutId);
-        
         if (response.status === 200) {
           setMlStatus("ready");
         }
-      } catch (error) {
+      } catch {
         clearTimeout(timeoutId);
-        console.log("Health check error:", error);
-        console.error("ML Service status check failed:", error);
         // If it fails, assume it's waking up or down. 
         // Render free tier might just timeout the first request or return 502 temporarily.
         setMlStatus("waking-up");
