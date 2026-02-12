@@ -10,9 +10,9 @@ import {
   MoreHorizontal, // this icon can be used for "more options" on class cards
   Loader2,
 } from "lucide-react";
+import { getSettings, updateSettings } from "../api/settings";
 import Spinner from "../components/Spinner";
 
-const apiUrl = import.meta.env.VITE_API_URL;
 
 export default function ManageSchedule() {
   const [activeDay, setActiveDay] = useState("Mon");
@@ -30,15 +30,7 @@ export default function ManageSchedule() {
       try {
         setIsLoading(true);
 
-        const res = await fetch(`${apiUrl}/settings`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-
-        if (!res.ok) throw new Error("Failed to load schedule");
-
-        const data = await res.json();
+        const data = await getSettings();
 
         const scheduleData = data.schedule || {
           timetable: [],
@@ -115,25 +107,10 @@ export default function ManageSchedule() {
     try {
       const schedulePayload = preparePayload();
 
-      const res = await fetch(`${apiUrl}/settings`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({
-          schedule: schedulePayload,
-        }),
-      });
+      await updateSettings({
+      schedule: schedulePayload,
+    }); 
 
-      if (!res.ok) {
-        let message = "Failed to save";
-        try {
-          const errorData = await res.json();
-          message = errorData.detail || message;
-        } catch {}
-        throw new Error(message);
-      }
       alert("Schedule saved successfully");
     } catch (err) {
       console.error(err);
