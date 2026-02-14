@@ -36,14 +36,23 @@ oauth = OAuth()
 @router.post("/register", response_model=RegisterResponse)
 async def register(payload: RegisterRequest, background_tasks: BackgroundTasks):
 
-    if len(payload.password.encode("utf-8")) > 72:
-        raise HTTPException(
-            status_code=400,
-            detail="Password too long. Please use at most 72 characters",
-        )
+    # if len(payload.password.encode("utf-8")) > 72:
+    #     raise HTTPException(
+    #         status_code=400,
+    #         detail="Password too long. Please use at most 72 characters",
+    #     )
 
     # Check existing user
     existing = await db.users.find_one({"email": payload.email})
+
+    # Hash password
+    try:
+        password_hash = hash_password(payload.password)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Password too long (max 72 bytes)",
+        )
 
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -55,7 +64,7 @@ async def register(payload: RegisterRequest, background_tasks: BackgroundTasks):
     user_doc = {
         "name": payload.name,
         "email": payload.email,
-        "password_hash": hash_password(payload.password),
+        "password_hash": password_hash,
         "role": payload.role,
         "college_name": payload.college_name,
         "is_verified": False,  # Changed to False for email verification flow
@@ -359,13 +368,14 @@ async def reset_password(payload: ResetPasswordRequest) -> dict:
     if not stored_otp_hash or not verify_password(payload.otp, stored_otp_hash):
         raise HTTPException(status_code=400, detail=GENERIC_OTP_ERROR)
 
-    if len(payload.new_password.encode("utf-8")) > 72:
+    # Hash password
+    try:
+        new_hash = hash_password(payload.password)
+    except ValueError:
         raise HTTPException(
             status_code=400,
-            detail="Password too long. Please use at most 72 characters",
+            detail="Password too long (max 72 bytes)",
         )
-
-    new_hash = hash_password(payload.new_password)
 
     await db.users.update_one(
         {"_id": user["_id"]},
