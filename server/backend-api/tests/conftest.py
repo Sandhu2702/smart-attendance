@@ -1,6 +1,7 @@
 import os
 import pytest
 import pytest_asyncio
+from datetime import datetime, timedelta, timezone
 from httpx import AsyncClient, ASGITransport
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -104,10 +105,6 @@ async def auth_token(client, db, test_user_data):
     return response.json()["token"]
 
 
-
-import datetime
-from datetime import timedelta, timezone
-
 @pytest.fixture
 def make_token_header():
     """
@@ -118,7 +115,7 @@ def make_token_header():
 
     def _create_header(user_id: str, role: str, email: str = None):
         email = email or f"{role}@test.com"
-        exp = datetime.datetime.now(timezone.utc) + timedelta(days=30)
+        exp = datetime.now(timezone.utc) + timedelta(days=30)
         token_payload = {
             "sub": user_id,
             "role": role,
