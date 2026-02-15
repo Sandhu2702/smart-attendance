@@ -14,6 +14,7 @@ import logging
 from datetime import datetime, timezone
 
 from bson import ObjectId
+from bson.errors import InvalidId
 from fastapi import HTTPException, status
 
 from app.db.mongo import db
@@ -41,8 +42,17 @@ async def generate_qr_for_course(course_id: str, teacher_id: str) -> str:
     before issuing a token.  A stolen teacher JWT should not let an attacker
     generate QRs for courses they do not teach.
     """
+    # Validate the course_id is a valid ObjectId
+    try:
+        course_oid = ObjectId(course_id)
+    except InvalidId:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid course_id",
+        )
+
     # Validate the course exists
-    course = await db.subjects.find_one({"_id": ObjectId(course_id)})
+    course = await db.subjects.find_one({"_id": course_oid})
     if not course:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -50,9 +60,13 @@ async def generate_qr_for_course(course_id: str, teacher_id: str) -> str:
         )
 
     # Ownership check — the teacher must be linked to the course.
-    # The subject document stores the teacher via `teacher_id` or `teacherId`.
-    owner = course.get("teacher_id") or course.get("teacherId")
-    if owner and str(owner) != str(teacher_id):
+    # The subject document stores the teacher via `teacher_id` or
+    # `teacherId`.  If neither field is set, reject — an unowned
+    # course must not allow QR generation.
+    owner = (
+        course.get("teacher_id") or course.get("teacherId")
+    )
+    if not owner or str(owner) != str(teacher_id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not the teacher of this course",
@@ -117,7 +131,10 @@ async def validate_qr_and_mark(
     if age_seconds > QR_TOKEN_TTL_SECONDS:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"QR code expired ({age_seconds:.1f}s old, max {QR_TOKEN_TTL_SECONDS}s)",
+            detail=(
+                f"QR code expired ({age_seconds:.1f}s old, "
+                f"max {QR_TOKEN_TTL_SECONDS}s)"
+            ),
         )
 
     if age_seconds < 0:
@@ -128,19 +145,9 @@ async def validate_qr_and_mark(
             detail="QR token timestamp is in the future — possible tampering",
         )
 
-    # ── Step 4: Replay protection (nonce) ───────────────────────
-    # `consume_nonce` is atomic: it returns True only the first time this
-    # nonce is seen.  All subsequent calls for the same nonce return False.
-    nonce_is_fresh = await consume_nonce(nonce)
-    if not nonce_is_fresh:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="QR code has already been used (replay detected)",
-        )
-
-    # ── Step 5: Duplicate attendance guard ──────────────────────
-    # Even with nonce protection a determined attacker might try different
-    # QR tokens for the same course + student combination on the same day.
+    # ── Step 4: Duplicate attendance guard ──────────────────────
+    # Check this BEFORE consuming the nonce so that a valid QR token
+    # is not burned when the student already has attendance today.
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     existing = await qr_attendance_col.find_one({
         "student_id": student_id,
@@ -153,8 +160,26 @@ async def validate_qr_and_mark(
             detail="Attendance already marked for this course today",
         )
 
+    # ── Step 5: Replay protection (nonce) ───────────────────────
+    # `consume_nonce` is atomic: it returns True only the first time
+    # this nonce is seen.  Consumed AFTER the duplicate check so we
+    # don't burn a valid token unnecessarily.
+    nonce_is_fresh = await consume_nonce(nonce)
+    if not nonce_is_fresh:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="QR code has already been used (replay detected)",
+        )
+
     # ── Step 6: Verify course exists ────────────────────────────
-    course = await db.subjects.find_one({"_id": ObjectId(course_id)})
+    try:
+        course_oid = ObjectId(course_id)
+    except InvalidId:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid course_id in QR token",
+        )
+    course = await db.subjects.find_one({"_id": course_oid})
     if not course:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

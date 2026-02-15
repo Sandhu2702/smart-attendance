@@ -17,7 +17,6 @@ removed before the token that carried it has expired.
 """
 
 import os
-import time
 import logging
 from datetime import datetime, timezone, timedelta
 
@@ -126,14 +125,19 @@ async def consume_nonce(nonce: str) -> bool:
     # MongoDB fallback — use _id uniqueness for atomicity
     from app.db.mongo import db
     await _ensure_mongo_ttl_index()
+    from pymongo.errors import DuplicateKeyError
+
     try:
         await db.qr_nonces.insert_one({
             "_id": nonce,
-            "expires_at": datetime.now(timezone.utc) + timedelta(seconds=NONCE_TTL_SECONDS),
+            "expires_at": (
+                datetime.now(timezone.utc)
+                + timedelta(seconds=NONCE_TTL_SECONDS)
+            ),
         })
         return True  # fresh nonce — consumed successfully
-    except Exception:
-        # DuplicateKeyError means nonce was already stored → replay
+    except DuplicateKeyError:
+        # Nonce was already stored → replay attempt
         return False
 
 

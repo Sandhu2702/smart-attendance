@@ -21,8 +21,16 @@ logger = logging.getLogger(__name__)
 
 # ── Configuration ───────────────────────────────────────────────
 # Dedicated secret for QR tokens; falls back to main JWT secret.
-QR_JWT_SECRET: str = os.getenv("QR_JWT_SECRET") or os.getenv("JWT_SECRET", "")
+QR_JWT_SECRET: str = (
+    os.getenv("QR_JWT_SECRET") or os.getenv("JWT_SECRET", "")
+)
 QR_JWT_ALGORITHM: str = os.getenv("QR_JWT_ALGORITHM", "HS256")
+
+if not QR_JWT_SECRET:
+    raise RuntimeError(
+        "QR_JWT_SECRET (or JWT_SECRET) is not set. "
+        "QR tokens cannot be signed without a secret."
+    )
 
 # How long (in seconds) a QR token remains valid.
 QR_TOKEN_TTL_SECONDS: int = int(os.getenv("QR_TOKEN_TTL_SECONDS", "10"))

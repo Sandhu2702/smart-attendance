@@ -58,7 +58,7 @@ async def register(payload: RegisterRequest, background_tasks: BackgroundTasks):
         "password_hash": hash_password(payload.password),
         "role": payload.role,
         "college_name": payload.college_name,
-        "is_verified": True,  # Auto-verify for local dev (set to False in production with working email)
+        "is_verified": os.getenv("ENVIRONMENT") == "development",
         "verification_token": verification_token,
         "verification_expiry": verification_expiry,
         "created_at": datetime.now(UTC),
@@ -192,7 +192,7 @@ async def login(payload: LoginRequest):
 # ----- Forgot Password flow (Issue #196, #226) -----
 
 OTP_FAILED_ATTEMPTS_MAX = 5
-"""Maximum failed OTP verification attempts before the 
+"""Maximum failed OTP verification attempts before the
 OTP is cleared (brute-force protection)."""
 
 GENERIC_OTP_ERROR = "Invalid or expired OTP"

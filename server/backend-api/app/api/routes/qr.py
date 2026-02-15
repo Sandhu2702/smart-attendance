@@ -21,7 +21,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.deps import get_current_teacher
 from app.core.security import get_current_user
 from app.schemas.qr import (
-    QRGenerateRequest,
     QRGenerateResponse,
     QRMarkAttendanceRequest,
     QRMarkAttendanceResponse,

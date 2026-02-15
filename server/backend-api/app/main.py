@@ -63,7 +63,6 @@ async def lifespan(app: FastAPI):
     await ml_client.close()
     logger.info("ML client closed")
     await close_redis()
-    logger.info("Redis connection closed")
 
 
 def create_app() -> FastAPI:
