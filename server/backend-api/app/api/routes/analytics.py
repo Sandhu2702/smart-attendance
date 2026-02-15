@@ -316,8 +316,9 @@ async def get_global_stats(
 
     results = await db.attendance_daily.aggregate(pipeline).to_list(length=1000)
 
-    # Calculate overall statistics
+    # Build stats for subjects with attendance data
     subject_stats = []
+    stats_by_id = {}
     total_percentage = 0.0
     risk_count = 0
 
@@ -325,25 +326,44 @@ async def get_global_stats(
         class_id_str = str(result["_id"])
         subject_info = subject_map.get(class_id_str, {})
         attendance_pct = result["attendancePercentage"]
-
-        subject_stats.append(
-            {
-                "subjectId": class_id_str,
-                "subjectName": subject_info.get("name", "Unknown"),
-                "subjectCode": subject_info.get("code", "N/A"),
-                "attendancePercentage": attendance_pct,
-                "totalPresent": result["totalPresent"],
-                "totalAbsent": result["totalAbsent"],
-                "totalLate": result["totalLate"],
-                "totalStudents": result["totalStudents"],
-            }
-        )
-
+        stat = {
+            "subjectId": class_id_str,
+            "subjectName": subject_info.get("name", "Unknown"),
+            "subjectCode": subject_info.get("code", "N/A"),
+            "attendancePercentage": attendance_pct,
+            "totalPresent": result["totalPresent"],
+            "totalAbsent": result["totalAbsent"],
+            "totalLate": result["totalLate"],
+            "totalStudents": result["totalStudents"],
+        }
+        subject_stats.append(stat)
+        stats_by_id[class_id_str] = stat
         total_percentage += attendance_pct
         if attendance_pct < 75:
             risk_count += 1
 
-    # Calculate overall attendance (average of averages)
+    # Add subjects with no attendance data as 0% attendance
+    for s in subjects:
+        sid = str(s["_id"])
+        if sid not in stats_by_id:
+            stat = {
+                "subjectId": sid,
+                "subjectName": s.get("name", "Unknown"),
+                "subjectCode": s.get("code", "N/A"),
+                "attendancePercentage": 0.0,
+                "totalPresent": 0,
+                "totalAbsent": 0,
+                "totalLate": 0,
+                "totalStudents": 0,
+            }
+            subject_stats.append(stat)
+            total_percentage += 0.0
+            risk_count += 1  # 0% < 75%
+
+    # Re-sort by attendancePercentage descending
+    subject_stats.sort(key=lambda x: x["attendancePercentage"], reverse=True)
+
+    # Recompute overall_attendance (average of all, including 0% subjects)
     overall_attendance = (
         round(total_percentage / len(subject_stats), 2) if subject_stats else 0.0
     )

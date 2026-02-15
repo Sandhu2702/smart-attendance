@@ -589,7 +589,7 @@ backend-api:
 
 **1. ML Service Connection Errors**
 
-```
+```text
 Error: ML Service communication error
 ```
 
@@ -602,7 +602,7 @@ Solution:
 
 **2. MongoDB Connection Issues**
 
-```
+```text
 Error: Could not connect to MongoDB
 ```
 
@@ -615,7 +615,7 @@ Solution:
 
 **3. Cloudinary Upload Failures**
 
-```
+```text
 Error: Failed to upload image
 ```
 
