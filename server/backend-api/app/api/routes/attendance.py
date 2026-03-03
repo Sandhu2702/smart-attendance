@@ -495,7 +495,7 @@ async def mark_attendance(request: Request, payload: Dict):
     # Call ML service to detect faces
     try:
         ml_response = await ml_client.detect_faces(
-            image_base64=image_b64, min_face_area_ratio=0.04, num_jitters=3, model="hog"
+            image_base64=image_b64, min_face_area_ratio=0.01, num_jitters=3, model="hog"
         )
 
         if not ml_response.get("success"):
@@ -582,10 +582,18 @@ async def mark_attendance(request: Request, payload: Dict):
             status = "unknown"
             best_match = None
 
+        # Check for Liveness (Anti-Spoofing)
+        is_live = face.get("is_live", True)
+        if not is_live:
+            status = "spoof"
+            best_match = None
+            logger.warning("Spoof detected for face index %d", i)
+
         logger.debug(
-            "Match: %s distance=%.4f",
+            "Match: %s distance=%.4f is_live=%s",
             best_match["name"] if best_match else "NONE",
             distance,
+            is_live,
         )
 
         # Get user details

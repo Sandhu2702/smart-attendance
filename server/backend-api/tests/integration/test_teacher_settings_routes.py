@@ -17,10 +17,15 @@ async def test_manage_schedule(client: AsyncClient, auth_token):
         ]
     }
     
-    response = await client.post("/schedule/update", json=schedule_item, headers=headers)
-    # Route path might vary, assuming /schedule/update or similar
+    # Try the standard schedule creation/update route
+    response = await client.post("/schedule", json=schedule_item, headers=headers)
+    
     if response.status_code == 404:
-        # Try /teacher/schedule if it exists
+        # Fallback to teacher-specific route
         response = await client.post("/teacher/schedule", json=schedule_item, headers=headers)
 
-    assert response.status_code != 500
+    assert response.status_code in [200, 201, 204], f"Schedule update failed: {response.text}"
+    
+    if response.status_code != 204 and response.content:
+        data = response.json()
+        assert isinstance(data, dict)

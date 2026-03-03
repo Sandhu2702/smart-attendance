@@ -2,7 +2,8 @@ import { http, HttpResponse } from 'msw'
 
 export const handlers = [
   // Auth mock
-  http.post('*/api/v1/auth/login', async ({ request }) => {
+  // Update patterns to match the actual client baseURL usage (/api/...)
+  http.post('*/api/auth/login', async ({ request }) => {
     return HttpResponse.json({
       access_token: 'mock-token-123',
       token_type: 'bearer',
@@ -15,7 +16,7 @@ export const handlers = [
     })
   }),
 
-  http.get('*/api/v1/auth/me', () => {
+  http.get('*/api/auth/me', () => {
     return HttpResponse.json({
         id: 'user-123',
         email: 'test@example.com',
@@ -25,15 +26,16 @@ export const handlers = [
   }),
 
   // Attendance mock
-  http.post('*/api/v1/attendance/mark', () => {
+  http.post('*/api/attendance/mark', () => {
     return HttpResponse.json({
         message: 'Attendance marked successfully',
         status: 'present',
-        confidence: 0.95
+        confidence: 0.95,
+        faces: [] // Required by captureAndSend logic
     })
   }),
 
-  http.get('*/api/v1/attendance/history', () => {
+  http.get('*/api/attendance/history', () => {
     return HttpResponse.json([
         {
             date: '2023-10-01',

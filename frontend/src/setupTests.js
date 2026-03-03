@@ -137,9 +137,6 @@ vi.mock('react-i18next', () => {
     };
 });
 
-afterEach(() => {
-  cleanup();
-});
 
 // Mock ResizeObserver if needed by some components (charts etc)
 global.ResizeObserver = class ResizeObserver {

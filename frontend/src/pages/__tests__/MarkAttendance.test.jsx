@@ -1,13 +1,15 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import MarkAttendance from '../MarkAttendance';
 
-vi.mock('../../hooks/useCurrentUser', () => ({
-    useCurrentUser: () => ({
-        user: { name: 'Test Student', role: 'student' },
-        isAuthenticated: true
-    })
+vi.mock('../../api/teacher', () => ({
+    fetchMySubjects: vi.fn(),
+    fetchSubjectStudents: vi.fn()
+}));
+
+vi.mock('../../api/attendance', () => ({
+    captureAndSend: vi.fn()
 }));
 
 describe('MarkAttendance Component', () => {
