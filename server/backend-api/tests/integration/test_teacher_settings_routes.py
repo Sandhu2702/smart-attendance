@@ -1,6 +1,5 @@
 import pytest
 from httpx import AsyncClient
-from bson import ObjectId
 
 
 @pytest.mark.asyncio
