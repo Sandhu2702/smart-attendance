@@ -9,6 +9,7 @@ subjects_col = db["subjects"]
 
 async def get_student_profile(user_id: str):
     from app.db.mongo import db
+
     # 1. Get user document
     user = await db["users"].find_one({"_id": ObjectId(user_id)})
     if not user:
