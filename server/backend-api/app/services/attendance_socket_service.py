@@ -250,7 +250,7 @@ async def flush_attendance_data():
                             "isProxy": scan["isProxy"],
                         }
                     )
-                
+
                 updated_logs = None
                 if log_students_data:
                     updated_logs = await log_grouped_attendance(
@@ -312,7 +312,9 @@ async def stop_and_save_session(session_id: str):
                     unique_scans = {s["studentId"]: s for s in scans}.values()
 
                     # Grouped Logs & Analytics
-                    subject_doc = await db.subjects.find_one({"_id": ObjectId(subject_id)})
+                    subject_doc = await db.subjects.find_one(
+                        {"_id": ObjectId(subject_id)}
+                    )
                     teacher_id = (
                         subject_doc["professor_ids"][0]
                         if subject_doc and subject_doc.get("professor_ids")

@@ -47,13 +47,15 @@ async def log_grouped_attendance(
         update_doc,
         upsert=True,
     )
-    
+
     # Return the updated document count if possible, or we might need to fetch it
     # But for efficiency, we can just return nothing and let caller decide.
     # However, for analytics, we might want to know the total count.
     # Let's return the new document or fetch it.
-    
-    return await db.attendance_logs.find_one({"subjectId": subject_oid, "date": date_str})
+
+    return await db.attendance_logs.find_one(
+        {"subjectId": subject_oid, "date": date_str}
+    )
 
 
 async def get_attendance_for_student(student_id: str, start_date=None, end_date=None):

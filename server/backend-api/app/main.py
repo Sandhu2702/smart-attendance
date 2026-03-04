@@ -118,9 +118,8 @@ def create_app() -> FastAPI:
     )
     app.add_exception_handler(Exception, generic_exception_handler)
 
-
-    # Routes Mounting 
-    # Legacy routes support Router 
+    # Routes Mounting
+    # Legacy routes support Router
     app.include_router(api_legacy_router)
     # v1 router
     app.include_router(api_v1_router)

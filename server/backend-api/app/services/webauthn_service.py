@@ -9,7 +9,6 @@ from webauthn import (
     verify_authentication_response,
     base64url_to_bytes,
 )
-
 from webauthn.helpers.structs import (
     AuthenticatorSelectionCriteria,
     UserVerificationRequirement,
@@ -31,9 +30,10 @@ def get_rp_id(origin: str) -> str:
     return parsed.hostname or "localhost"
 
 
-# ==============================
-# REGISTRATION
-# ==============================
+# -----------------------------
+# Registration
+# -----------------------------
+
 
 async def generate_reg_options(
     user: dict,
@@ -42,19 +42,19 @@ async def generate_reg_options(
 ):
     exclude_credentials = []
 
-    for cred in user.get("webauthn_credentials", []):
-        try:
-            cred_id_bytes = base64url_to_bytes(cred["credential_id"])
-
-            exclude_credentials.append(
-                {
-                    "id": cred_id_bytes,
-                    "type": "public-key",
-                    "transports": cred.get("transports", []),
-                }
-            )
-        except Exception:
-            pass
+    if "webauthn_credentials" in user:
+        for cred in user["webauthn_credentials"]:
+            try:
+                cred_id_bytes = base64url_to_bytes(cred["credential_id"])
+                exclude_credentials.append(
+                    {
+                        "id": cred_id_bytes,
+                        "type": "public-key",
+                        "transports": cred.get("transports", []),
+                    }
+                )
+            except Exception:
+                pass
 
     options = generate_registration_options(
         rp_id=rp_id,
@@ -141,36 +141,39 @@ async def verify_reg_response(
     return credential_data
 
 
-# ==============================
-# AUTHENTICATION
-# ==============================
+# -----------------------------
+# Authentication
+# -----------------------------
+
 
 async def generate_auth_options(user: dict, rp_id: str):
     allow_credentials = []
 
-    for cred in user.get("webauthn_credentials", []):
-        try:
-            cid = cred["credential_id"]
+    if "webauthn_credentials" in user:
+        for cred in user["webauthn_credentials"]:
+            try:
+                cid = cred["credential_id"]
 
-            if isinstance(cid, bytes):
-                cid = cid.decode("utf-8")
+                if isinstance(cid, bytes):
+                    cid = cid.decode("utf-8")
 
-            transports = []
+                transports = []
 
-            for t in cred.get("transports", []):
-                try:
-                    transports.append(AuthenticatorTransport(t))
-                except ValueError:
-                    pass
+                if cred.get("transports"):
+                    for t in cred["transports"]:
+                        try:
+                            transports.append(AuthenticatorTransport(t))
+                        except ValueError:
+                            pass
 
-            allow_credentials.append(
-                PublicKeyCredentialDescriptor(
-                    id=base64url_to_bytes(cid),
-                    transports=transports or None,
+                allow_credentials.append(
+                    PublicKeyCredentialDescriptor(
+                        id=base64url_to_bytes(cid),
+                        transports=transports or None,
+                    )
                 )
-            )
-        except Exception as e:
-            print(f"Skipping credential due to error: {e}")
+            except Exception as e:
+                print(f"Skipping credential due to error: {e}")
 
     if not allow_credentials:
         raise ValueError("No biometric credentials registered")
@@ -187,11 +190,6 @@ async def generate_auth_options(user: dict, rp_id: str):
         .rstrip("=")
     )
 
-    print(
-        f"DEBUG: Setting challenge for user "
-        f"{user['_id']}: {challenge_b64}"
-    )
-
     await db.users.update_one(
         {"_id": user["_id"]},
         {"$set": {"current_challenge": challenge_b64}},
@@ -206,15 +204,11 @@ async def verify_auth_response(
     origin: str,
     rp_id: str,
 ):
-    print(
-        f"DEBUG: Verifying user {user['_id']}. "
-        f"Challenge in DB: {user.get('current_challenge')}"
-    )
-
     expected_challenge = user.get("current_challenge")
 
     if not expected_challenge:
         fresh_user = await db.users.find_one({"_id": user["_id"]})
+
         if fresh_user:
             expected_challenge = fresh_user.get("current_challenge")
             user = fresh_user
@@ -243,43 +237,31 @@ async def verify_auth_response(
                 break
 
     if not credential:
-        raise ValueError(
-            f"Credential not registered. ID: {credential_id}"
-        )
+        raise ValueError(f"Credential not registered. ID: {credential_id}")
 
     try:
         verification = verify_authentication_response(
             credential=response,
-            expected_challenge=base64url_to_bytes(
-                expected_challenge
-            ),
+            expected_challenge=base64url_to_bytes(expected_challenge),
             expected_origin=origin,
             expected_rp_id=rp_id,
             credential_public_key=base64url_to_bytes(
                 credential["public_key"]
             ),
-            credential_current_sign_count=credential[
-                "sign_count"
-            ],
+            credential_current_sign_count=credential["sign_count"],
             require_user_verification=True,
         )
     except Exception as e:
-        raise ValueError(
-            f"Authentication verification failed: {e}"
-        )
+        raise ValueError(f"Authentication verification failed: {e}")
 
     await db.users.update_one(
         {
             "_id": user["_id"],
-            "webauthn_credentials.credential_id": (
-                credential["credential_id"]
-            ),
+            "webauthn_credentials.credential_id": credential["credential_id"],
         },
         {
             "$set": {
-                "webauthn_credentials.$.sign_count": (
-                    verification.new_sign_count
-                ),
+                "webauthn_credentials.$.sign_count": verification.new_sign_count,
                 "current_challenge": None,
             }
         },
