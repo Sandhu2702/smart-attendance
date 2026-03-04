@@ -37,12 +37,11 @@ from app.ml.face_detector import detect_faces
 from app.ml.face_encoder import get_face_embedding
 from app.ml.face_matcher import cosine_similarity
 from app.ml.liveness import is_live
-from app.core.config import Settings
+from app.core.config import settings
 
 router = APIRouter(
     prefix="/api/ml", tags=["ML"], dependencies=[Depends(verify_api_key)]
 )
-settings = Settings()
 
 
 @router.post("/encode-face", response_model=EncodeFaceResponse)
