@@ -258,9 +258,7 @@ async def verify_auth_response(
             expected_challenge=base64url_to_bytes(expected_challenge),
             expected_origin=origin,
             expected_rp_id=rp_id,
-            credential_public_key=base64url_to_bytes(
-                credential["public_key"]
-            ),
+            credential_public_key=base64url_to_bytes(credential["public_key"]),
             credential_current_sign_count=credential["sign_count"],
             require_user_verification=True,
         )
