@@ -503,7 +503,8 @@ async def get_students_attendance_trends(
         student_id_str = str(student_id)
 
         # Query attendance_logs for this student in this subject
-        # attendance_logs schema: { subjectId, date, students: [{ studentId, scanTime, method }] }
+        # attendance_logs schema:
+        # { subjectId, date, students: [{ studentId, scanTime, method }] }
 
         # Current week attendance
         current_week_pipeline = [
