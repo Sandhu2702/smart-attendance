@@ -142,13 +142,26 @@ async def websocket_endpoint(
                     # Fetch Candidates
                     try:
                         subject_oid = ObjectId(subject_id)
-                        subject = await db.subjects.find_one({"_id": subject_oid}, {"students": 1})
+                        subject = await db.subjects.find_one(
+                            {"_id": subject_oid},
+                            {"students": 1, "professor_ids": 1},
+                        )
                     except bson_errors.InvalidId:
                         subject = None
                         
                     if not subject:
                         await websocket.send_json({"type": "error", "message": "Subject not found"})
                         continue
+
+                    if (
+                        user.get("role") != "admin"
+                        and user["_id"] not in subject.get("professor_ids", [])
+                    ):
+                        logger.warning(
+                            f"Subject mismatch for user {user_id}. Subject: {subject_id}"
+                        )
+                        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+                        return
 
                     student_user_ids = [
                         s["student_id"] for s in subject.get("students", []) if s.get("verified", False)
@@ -181,6 +194,11 @@ async def websocket_endpoint(
                             threshold=ML_CONFIDENT_THRESHOLD
                         )
 
+                        if not match_resp.get("success"):
+                            raise RuntimeError(
+                                match_resp.get("error", "ML match failed")
+                            )
+
                         match_data = match_resp.get("match", {})
                         best_student_id = match_data.get("student_id")
                         distance = match_data.get("distance", 1.0)
@@ -210,10 +228,14 @@ async def websocket_endpoint(
                                     }
 
                         # Check liveness
-                        is_live = face.get("is_live", True)
-                        if not is_live:
+                        is_live = face.get("is_live")  # Don't default to True!
+                        if is_live is False:
                             status_str = "spoof"
                             student_details = None
+                        elif is_live is None:
+                            status_str = "unknown"
+                            student_details = None
+                            logger.warning(f"Face live check returned None (index {i})")
 
                         result_item = {
                             "box": {

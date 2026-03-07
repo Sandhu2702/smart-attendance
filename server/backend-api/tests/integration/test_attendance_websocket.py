@@ -83,7 +83,7 @@ def test_websocket_process_frame(client):
              # 1. processing_started
              msg1 = websocket.receive_json()
              assert msg1["type"] == "processing_started"
-             assert msg1["total_faces"] == 1
+             assert msg1["pending"] == 1
              
              # 2. match_update
              msg2 = websocket.receive_json()

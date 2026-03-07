@@ -232,7 +232,7 @@ export default function MarkAttendance() {
   const wsRef = useRef(null);
 
   useEffect(() => {
-    if (!selectedSubject) return;
+    if (!selectedSubject || attendanceSubmitted) return;
 
     // Determine WebSocket URL
     const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -241,7 +241,7 @@ export default function MarkAttendance() {
     const token = localStorage.getItem("token");
     const wsUrl = `${wsBase}/attendance/ws/${sessionId}?token=${token}`;
 
-    console.log("Connecting WS:", wsUrl);
+    console.log("Connecting WS:", `${wsBase}/attendance/ws/${sessionId}`);
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
@@ -304,7 +304,7 @@ export default function MarkAttendance() {
       clearInterval(interval);
       ws.close();
     };
-  }, [selectedSubject]);
+  }, [selectedSubject, attendanceSubmitted]);
 
   const presentStudents = Object.values(attendanceMap)
     .filter((s) => s.status === "present")
