@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 async def create_indexes():
     client = AsyncIOMotorClient(settings.MONGO_URI)
-    db = client.get_database()
+    db = client.get_database(settings.MONGO_DB)
     
     try:
         await db.refresh_tokens.create_index(

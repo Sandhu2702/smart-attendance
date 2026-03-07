@@ -317,11 +317,14 @@ async def refresh_token_endpoint(request: Request, payload: RefreshTokenRequest)
             raise HTTPException(status_code=401, detail="User not found")
 
         refresh_token_hash = hash_refresh_token(payload.refresh_token)
-        stored_token = await db.refresh_tokens.find_one({
-            "user_id": user["_id"],
-            "token_hash": refresh_token_hash,
-            "revoked": False,
-        })
+        stored_token = await db.refresh_tokens.find_one_and_update(
+            {
+                "user_id": user["_id"],
+                "token_hash": refresh_token_hash,
+                "revoked": False,
+            },
+            {"$set": {"revoked": True}}
+        )
 
         if not stored_token:
             raise HTTPException(status_code=401, detail="Invalid or revoked refresh token")
@@ -359,11 +362,6 @@ async def refresh_token_endpoint(request: Request, payload: RefreshTokenRequest)
         new_refresh_token_hash = hash_refresh_token(new_refresh_token)
         new_refresh_token_expires_at = datetime.now(timezone.utc) + timedelta(days=7)
 
-        await db.refresh_tokens.update_one(
-            {"_id": stored_token["_id"]},
-            {"$set": {"revoked": True}}
-        )
-
         await db.refresh_tokens.insert_one({
             "user_id": user["_id"],
             "token_hash": new_refresh_token_hash,
@@ -381,7 +379,6 @@ async def refresh_token_endpoint(request: Request, payload: RefreshTokenRequest)
             "college_name": user.get("college_name", ""),
             "token": access_token,
             "refresh_token": new_refresh_token,
-        }
         }
     except HTTPException:
         raise
@@ -990,15 +987,22 @@ async def logout(request: Request):
             logger.warning("Logout attempted for non-existent user: %s", user_id)
             raise HTTPException(status_code=404, detail="User not found")
 
+        
+        # Revoke refresh tokens whether we have a specific session or not
+        revoke_filter = {
+            "user_id": obj_id,
+            "revoked": False
+        }
+        
         if session_id:
-            await db.refresh_tokens.update_many(
-                {
-                    "user_id": obj_id,
-                    "session_id": session_id,
-                    "revoked": False
-                },
-                {"$set": {"revoked": True}}
-            )
+            revoke_filter["session_id"] = session_id
+        else:
+            revoke_filter["session_id"] = {"$exists": False}
+
+        await db.refresh_tokens.update_many(
+            revoke_filter,
+            {"$set": {"revoked": True}}
+        )
 
         update_query = {
             "$unset": {
