@@ -18,20 +18,25 @@ class MLClient:
         self.timeout = ML_SERVICE_TIMEOUT
         self.max_retries = ML_SERVICE_MAX_RETRIES
 
-        # Create httpx client with connection pooling
-        # Header value may be None when ML_API_KEY is unset; we validate lazily before ML calls.
-        self.client = httpx.AsyncClient(
-            base_url=self.base_url,
-            headers={"X-API-Key": self.api_key},
-            timeout=self.timeout,
-            limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
-        )
+        # Create httpx client with connection pooling.
+        # Only attach API key header when configured.
+        # Missing key is validated lazily.
+        client_kwargs = {
+            "base_url": self.base_url,
+            "timeout": self.timeout,
+            "limits": httpx.Limits(max_keepalive_connections=5, max_connections=10),
+        }
+        if self.api_key:
+            client_kwargs["headers"] = {"X-API-Key": self.api_key}
+
+        self.client = httpx.AsyncClient(**client_kwargs)
 
     def _ensure_ml_api_key_configured(self) -> None:
         """Fail only when ML functionality is actually invoked."""
         if not self.api_key:
             raise RuntimeError(
-                "ML_API_KEY is not configured. Set ML_API_KEY to use ML-powered endpoints."
+                "ML_API_KEY is not configured. "
+                "Set ML_API_KEY to use ML-powered endpoints."
             )
 
     async def close(self):
