@@ -45,6 +45,13 @@ services:
       - "8001:8001"
     env_file:
       - .env
+    logging:
+      driver: "json-file"
+      options:
+        tag: "{{.ImageName}}|{{.Name}}|{{.ID}}"
+        labels: "service"
+    labels:
+      service: "ml-service"
     volumes:
       - ./server/ml-service:/app
       - ml_models:/app/app/ml
@@ -105,6 +112,13 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    logging:
+      driver: "json-file"
+      options:
+        tag: "{{.ImageName}}|{{.Name}}|{{.ID}}"
+        labels: "service"
+    labels:
+      service: "backend-api"
     volumes:
       - ./server/backend-api:/app
     networks:
