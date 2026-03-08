@@ -110,13 +110,18 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     session_cookie_secure = parse_env_bool("SESSION_COOKIE_SECURE", "false")
     session_cookie_same_site = parse_session_same_site("lax")
-     # Warn if insecure session cookies are used outside of development.
+    # Warn if insecure session cookies are used outside of development.
     environment = os.getenv("ENVIRONMENT", "development")
-    if not session_cookie_secure and environment.lower() not in ("development", "dev", "local"):
+    if (
+        not session_cookie_secure
+        and environment.lower() not in ("development", "dev", "local")
+    ):
         logger.warning(
-            "SESSION_COOKIE_SECURE is false while ENVIRONMENT=%s; "
-            "session cookies will not be marked Secure. "
-            "This is unsafe for production deployments.",
+            (
+                "SESSION_COOKIE_SECURE is false while ENVIRONMENT=%s; "
+                "session cookies will not be marked Secure. "
+                "This is unsafe for production deployments."
+            ),
             environment,
         )
     # Browsers reject SameSite=None cookies unless they are also marked Secure.
