@@ -1,5 +1,5 @@
-import logging
 import os
+import structlog
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -19,6 +19,7 @@ from app.services.attendance_daily import (
 )
 from app.services.attendance import ensure_indexes as ensure_attendance_indexes
 from app.services.schedule_service import ensure_indexes as ensure_schedule_indexes
+from app.db.init_indexes import create_indexes as create_refresh_token_indexes
 from app.services.ml_client import ml_client
 from app.services.attendance_socket_service import sio
 from app.db.nonce_store import close_redis
@@ -43,9 +44,8 @@ from app.core.limiter import limiter, rate_limit_exceeded_handler
 
 load_dotenv()
 
-# Setup structured logging
-setup_logging()
-logger = logging.getLogger(APP_NAME)
+setup_logging(service_name="backend-api")
+logger = structlog.get_logger()
 
 if SENTRY_DSN := os.getenv("SENTRY_DSN"):
     sentry_sdk.init(
@@ -90,13 +90,16 @@ async def lifespan(app: FastAPI):
         await ensure_schedule_indexes()
         logger.info("schedule indexes ensured")
 
+        await create_refresh_token_indexes()
+        logger.info("refresh_tokens indexes ensured")
+
         await create_indexes(db)
         logger.info("application indexes ensured")
 
         start_scheduler()
     except Exception as e:
         logger.warning(
-            f"Could not connect to MongoDB. Application will continue, but DB features will fail. Error: {e}"  # noqa: E501
+            f"Could not connect to MongoDB. Application will continue, but DB features will fail. Error: {e}"
         )
         logger.warning("Please check your MONGO_URI in .env")
 
