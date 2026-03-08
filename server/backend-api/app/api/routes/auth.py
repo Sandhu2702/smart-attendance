@@ -327,16 +327,21 @@ async def refresh_token_endpoint(request: Request, payload: RefreshTokenRequest)
             raise HTTPException(status_code=401, detail="User not found")
 
         refresh_token_hash = hash_refresh_token(payload.refresh_token)
-        stored_token = await db.refresh_tokens.find_one({
-            "user_id": user["_id"],
-            "token_hash": refresh_token_hash,
-            "revoked": False,
-        })
+        stored_token = await db.refresh_tokens.find_one_and_update(
+            {
+                "user_id": user["_id"],
+                "token_hash": refresh_token_hash,
+                "revoked": False,
+            },
+            {"$set": {"revoked": True}}
+        )
 
         if not stored_token:
-            raise HTTPException(status_code=401, detail="Invalid or revoked refresh token")
+            err_detail = "Invalid or revoked refresh token"
+            raise HTTPException(status_code=401, detail=err_detail)
 
-        if stored_token["expires_at"] < datetime.now(timezone.utc):
+        normalized_expiry = _normalize_expiry(stored_token.get("expires_at"))
+        if normalized_expiry is None or normalized_expiry < datetime.now(timezone.utc):
             await db.refresh_tokens.update_one(
                 {"_id": stored_token["_id"]},
                 {"$set": {"revoked": True}}
@@ -368,11 +373,6 @@ async def refresh_token_endpoint(request: Request, payload: RefreshTokenRequest)
 
         new_refresh_token_hash = hash_refresh_token(new_refresh_token)
         new_refresh_token_expires_at = datetime.now(timezone.utc) + timedelta(days=7)
-
-        await db.refresh_tokens.update_one(
-            {"_id": stored_token["_id"]},
-            {"$set": {"revoked": True}}
-        )
 
         await db.refresh_tokens.insert_one({
             "user_id": user["_id"],
@@ -1024,7 +1024,8 @@ async def logout(request: Request):
         decoded = decode_jwt(token)
         user_id = decoded.get("user_id")
         session_id = decoded.get("session_id")
-        
+
+
         if not user_id:
             raise HTTPException(
                 status_code=401, detail="Invalid token payload: missing user_id"
@@ -1046,34 +1047,40 @@ async def logout(request: Request):
         raise HTTPException(status_code=401, detail="Invalid token")
 
     try:
-        user = await db.users.find_one({"_id": obj_id}, {"role": 1})
+        user = await db.users.find_one({"_id": obj_id}, {"role": 1, "current_active_session": 1})
 
         if not user:
             logger.warning("Logout attempted for non-existent user: %s", user_id)
             raise HTTPException(status_code=404, detail="User not found")
 
-        if session_id:
-            await db.refresh_tokens.update_many(
-                {
-                    "user_id": obj_id,
-                    "session_id": session_id,
-                    "revoked": False
-                },
-                {"$set": {"revoked": True}}
-            )
-
-        update_query = {
-            "$unset": {
-                "current_active_session": 1,
-            }
+        
+        # Revoke refresh tokens whether we have a specific session or not
+        revoke_filter = {
+            "user_id": obj_id,
+            "revoked": False
         }
+        
+        if session_id:
+            revoke_filter["session_id"] = session_id
+        else:
+            revoke_filter["session_id"] = {"$exists": False}
+
+        await db.refresh_tokens.update_many(
+            revoke_filter,
+            {"$set": {"revoked": True}}
+        )
+
+        update_query = {}
+
+        stored_session = user.get("current_active_session")
+        if session_id and stored_session == hash_session_id(session_id):
+            update_query["$unset"] = {"current_active_session": 1}
 
         if user.get("role") == "student":
-            update_query["$set"] = {
-                "last_logout_time": datetime.now(timezone.utc),
-            }
+            update_query.setdefault("$set", {})["last_logout_time"] = datetime.now(timezone.utc)
 
-        await db.users.update_one({"_id": obj_id}, update_query)
+        if update_query:
+            await db.users.update_one({"_id": obj_id}, update_query)
 
         logger.info("User logged out: %s (Role: %s)", user_id, user.get("role"))
         return {"message": "Logged out successfully"}

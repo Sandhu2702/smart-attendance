@@ -98,18 +98,27 @@ async def lifespan(app: FastAPI):
         await ensure_schedule_indexes()
         logger.info("schedule indexes ensured")
 
-        await create_refresh_token_indexes()
-        logger.info("refresh_tokens indexes ensured")
-
         await create_indexes(db)
         logger.info("application indexes ensured")
-
-        start_scheduler()
     except Exception as e:
         logger.warning(
-            f"Could not connect to MongoDB. Application will continue, but DB features will fail. Error: {e}"
+            "Could not connect to MongoDB. Application will continue, "
+            f"but DB features will fail. Error: {e}"
         )
         logger.warning("Please check your MONGO_URI in .env")
+
+    try:
+        await create_refresh_token_indexes()
+        logger.info("refresh_tokens indexes ensured")
+    except Exception as e:
+        logger.error(f"Failed to create refresh token indexes: {e}")
+        import sys
+        sys.exit(1)
+
+    try:
+        start_scheduler()
+    except Exception as e:
+        logger.exception(f"Failed to start scheduler: {e}")
 
     yield
     await ml_client.close()
