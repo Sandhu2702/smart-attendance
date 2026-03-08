@@ -229,9 +229,7 @@ async def websocket_endpoint(
                                 "student_id": str(s["userId"]),
                                 "embeddings": s["face_embeddings"],
                             }
-                        )# Use UNCERTAIN threshold so we can detect "uncertain" matches 
-                            # (between confident and uncertain thresholds)
-                            threshold=ML_UNCERTAIN
+                        )
 
                     for i, face in enumerate(faces):
                         match_resp = await ml_client.match_faces(
