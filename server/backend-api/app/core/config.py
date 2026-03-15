@@ -17,11 +17,9 @@ APP_NAME = "Smart Attendance API"
 DEFAULT_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
-    "http://localhost:4173",
     "https://sa-gl.vercel.app",
     "https://studentcheck.vercel.app",
     "http://127.0.0.1:5173",
-    "http://127.0.0.1:4173",
     "https://studentcheck-o25q.onrender.com",
     "https://smart-attendance-gsm7.onrender.com",
     "https://studentcheck-ml.onrender.com",
