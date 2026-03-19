@@ -13,9 +13,9 @@ import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 
 # Routers
-from app.api.auth import router as auth_router
-from app.api.students import router as student_router
-from app.api.webauthn import router as webauthn_router
+from api.auth import router as auth_router
+from api.students import router as student_router
+from api.webauthn import router as webauthn_router
 
 # Config
 from .core.config import APP_NAME, ORIGINS
