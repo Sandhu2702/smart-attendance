@@ -13,8 +13,9 @@ import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 
 # Routers
-from .api.v1 import router as api_v1_router
-from .api.v1 import legacyRouter as api_legacy_router
+from app.api.auth import router as auth_router
+from app.api.students import router as student_router
+from app.api.webauthn import router as webauthn_router
 
 # Config
 from .core.config import APP_NAME, ORIGINS
@@ -154,15 +155,6 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # ---------------- API VERSION REDIRECT ----------------
-
-    @app.middleware("http")
-    async def redirect_v1_routes(request: Request, call_next):
-
-        if request.url.path.startswith("/api/v1"):
-            request.scope["path"] = request.url.path.replace("/api/v1", "/api", 1)
-
-        return await call_next(request)
 
     # ---------------- SECURITY MIDDLEWARE ----------------
 
@@ -195,7 +187,9 @@ def create_app() -> FastAPI:
 
     # ---------------- ROUTES ----------------
 
-    app.include_router(api_legacy_router)
+    app.include_router(auth_router, prefix="/api")
+    app.include_router(student_router, prefix="/api")
+    app.include_router(webauthn_router, prefix="/api")
 
     # Optional health check
     @app.get("/")
